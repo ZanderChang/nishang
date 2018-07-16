@@ -1,5 +1,3 @@
-
-
 function Enable-DuplicateToken 
 {
 <# 
@@ -146,5 +144,3 @@ Goude 2012, TreuSec
     [System.Runtime.InteropServices.marshal]::GetLastWin32Error() 
   } 
 }
-
-

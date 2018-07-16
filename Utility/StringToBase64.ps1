@@ -24,14 +24,15 @@ PS > StringToBase64 "start-process calc.exe" -IsString
 http://labofapenetrationtester.blogspot.com/
 https://github.com/samratashok/nishang
 #>
-    [CmdletBinding()] 
-        Param( [Parameter(Position = 0, Mandatory = $False)]
+    [CmdletBinding()]
+        Param (
+        [Parameter(Position = 0, Mandatory = $False)]
         [String]
         $Str,
 
         [Parameter(Position = 1, Mandatory = $False)]
         [String]
-        $outputfile=".\base64encoded.txt", 
+        $outputfile=".\base64encoded.txt",
 
         [Switch]
         $IsString
@@ -39,20 +40,14 @@ https://github.com/samratashok/nishang
 
    if($IsString -eq $true)
     {
-    
-        $utfbytes  = [System.Text.Encoding]::Unicode.GetBytes($Str)
-       
+        $utfbytes = [System.Text.Encoding]::Unicode.GetBytes($Str)
     }
   else
     {
-        $utfbytes  = [System.Text.Encoding]::Unicode.GetBytes((Get-Content $Str))
+        $utfbytes = [System.Text.Encoding]::Unicode.GetBytes((Get-Content $Str))
     }
 
   $base64string = [System.Convert]::ToBase64String($utfbytes)
   Out-File -InputObject $base64string -Encoding ascii -FilePath "$outputfile"
   Write-Output "Encoded data written to file $outputfile"
 }
-
-
-
-

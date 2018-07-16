@@ -20,19 +20,18 @@ PS > TexttoExe C:\evil.text C:\exe\evil.exe
 http://www.exploit-monday.com/2011/09/dropping-executables-with-powershell.html
 https://github.com/samratashok/nishang
 #>
-    [CmdletBinding()] Param ( 
+    [CmdletBinding()]
+    Param (
         [Parameter(Position = 0, Mandatory = $True)]
         [String]
         $FileName,
-    
+
         [Parameter(Position = 1, Mandatory = $True)]
         [String]$EXE
     )
-    
+
     [String]$hexdump = get-content -path "$Filename"
     [Byte[]] $temp = $hexdump -split ' '
     [System.IO.File]::WriteAllBytes($EXE, $temp)
     Write-Output "Executable written to file $EXE"
 }
-
-

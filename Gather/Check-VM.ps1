@@ -1,27 +1,24 @@
-
-
 function Check-VM
 {
-
 <# 
-.SYNOPSIS 
+.SYNOPSIS
 Nishang script which detects whether it is in a known virtual machine.
- 
-.DESCRIPTION 
+
+.DESCRIPTION
 This script uses known parameters or 'fingerprints' of Hyper-V, VMWare, Virtual PC, Virtual Box,
 Xen and QEMU for detecting the environment.
 
-.EXAMPLE 
+.EXAMPLE
 PS > Check-VM
- 
-.LINK 
+
+.LINK
 http://www.labofapenetrationtester.com/2013/01/quick-post-check-if-your-payload-is.html
 https://github.com/samratashok/nishang
 
-.NOTES 
+.NOTES
 The script draws heavily from checkvm.rb post module from msf.
 https://github.com/rapid7/metasploit-framework/blob/master/modules/post/windows/gather/checkvm.rb
-#> 
+#>
     [CmdletBinding()] Param()
     $ErrorActionPreference = "SilentlyContinue"
     #Hyper-V
@@ -39,7 +36,7 @@ https://github.com/rapid7/metasploit-framework/blob/master/modules/post/windows/
                     $hypervm = $true
                 }
         }
-    
+
     if (!$hypervm)
         {
             $hyperv = Get-ChildItem HKLM:\HARDWARE\ACPI\FADT
@@ -48,7 +45,7 @@ https://github.com/rapid7/metasploit-framework/blob/master/modules/post/windows/
                     $hypervm = $true
                 }
         }
-            
+
     if (!$hypervm)
         {
             $hyperv = Get-ChildItem HKLM:\HARDWARE\ACPI\RSDT
@@ -66,12 +63,10 @@ https://github.com/rapid7/metasploit-framework/blob/master/modules/post/windows/
                     $hypervm = $true
                 }
         }
-   
+
     if ($hypervm)
         {
-    
-             "This is a Hyper-V machine."
-    
+            "This is a Hyper-V machine."
         }
 
     #VMWARE
@@ -90,7 +85,7 @@ https://github.com/rapid7/metasploit-framework/blob/master/modules/post/windows/
                     $vmwarevm = $true
                 }
         }
-    
+
     if (!$vmwarevm)
         {
             $vmware = Get-Childitem hklm:\hardware\devicemap\scsi -recurse | gp -Name identifier
@@ -111,11 +106,9 @@ https://github.com/rapid7/metasploit-framework/blob/master/modules/post/windows/
 
     if ($vmwarevm)
         {
-    
              "This is a VMWare machine."
-    
         }
-    
+        
     #Virtual PC
 
     $vpc = Get-Process
@@ -144,20 +137,15 @@ https://github.com/rapid7/metasploit-framework/blob/master/modules/post/windows/
 
     if ($vpcvm)
         {
-    
          "This is a Virtual PC."
-    
         }
-
 
     #Virtual Box
 
     $vb = Get-Process
     if (($vb -eq "vboxservice.exe") -or ($vb -match "vboxtray.exe"))
         {
-    
-        $vbvm = $true
-    
+            $vbvm = $true
         }
     if (!$vbvm)
         {
@@ -177,7 +165,6 @@ https://github.com/rapid7/metasploit-framework/blob/master/modules/post/windows/
                 }
         }
 
-    
     if (!$vbvm)
         {
             $vb = Get-Childitem hklm:\hardware\devicemap\scsi -recurse | gp -Name identifier
@@ -187,8 +174,6 @@ https://github.com/rapid7/metasploit-framework/blob/master/modules/post/windows/
                 }
         }
 
-
-
     if (!$vbvm)
         {
             $vb = Get-ItemProperty hklm:\HARDWARE\DESCRIPTION\System -Name SystemBiosVersion
@@ -197,7 +182,6 @@ https://github.com/rapid7/metasploit-framework/blob/master/modules/post/windows/
                      $vbvm = $true
                 }
         }
-  
 
     if (!$vbvm)
         {
@@ -210,12 +194,8 @@ https://github.com/rapid7/metasploit-framework/blob/master/modules/post/windows/
 
     if ($vbvm)
         {
-    
          "This is a Virtual Box."
-    
         }
-
-
 
     #Xen
 
@@ -223,11 +203,9 @@ https://github.com/rapid7/metasploit-framework/blob/master/modules/post/windows/
 
     if ($xen -eq "xenservice.exe")
         {
-    
-        $xenvm = $true
-    
+            $xenvm = $true
         }
-    
+
     if (!$xenvm)
         {
             $xen = Get-ChildItem HKLM:\HARDWARE\ACPI\FADT
@@ -245,7 +223,7 @@ https://github.com/rapid7/metasploit-framework/blob/master/modules/post/windows/
                     $xenvm = $true
                 }
         }
-    
+
     if (!$xenvm)
         {
             $xen = Get-ChildItem HKLM:\HARDWARE\ACPI\RSDT
@@ -255,7 +233,6 @@ https://github.com/rapid7/metasploit-framework/blob/master/modules/post/windows/
                 }
         }
 
-    
     if (!$xenvm)
         {
            $xen = Get-ChildItem HKLM:\SYSTEM\ControlSet001\Services
@@ -265,25 +242,19 @@ https://github.com/rapid7/metasploit-framework/blob/master/modules/post/windows/
                 }
         }
 
-
     if ($xenvm)
         {
-    
          "This is a Xen Machine."
-    
         }
-
 
     #QEMU
 
     $qemu = Get-Childitem hklm:\hardware\devicemap\scsi -recurse | gp -Name identifier
     if ($qemu -match "qemu")
         {
-    
             $qemuvm = $true
-    
         }
-    
+
     if (!$qemuvm)
         {
         $qemu = Get-ItemProperty hklm:HARDWARE\DESCRIPTION\System\CentralProcessor\0 -Name ProcessorNameString
@@ -291,15 +262,10 @@ https://github.com/rapid7/metasploit-framework/blob/master/modules/post/windows/
             {
                 $qemuvm = $true
             }
-        }    
+        }
 
     if ($qemuvm)
         {
-    
          "This is a Qemu machine."
-    
         }
 }
-
-
-

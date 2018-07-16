@@ -262,9 +262,6 @@ protected void executesql_Click(object sender, EventArgs e)
          
     </asp:Panel >
     </form>
-
-
-
  </div>
 </body>
 </HTML>

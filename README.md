@@ -9,9 +9,9 @@ Import all the scripts in the current PowerShell session (PowerShell v3 onwards)
 
     PS C:\nishang> Import-Module .\nishang.psm1
 
-Use the individual scripts with dot sourcing.
+Or use the individual scripts with dot sourcing.
 
-    PS C:\nishang> .\Gather\Get-Information.ps1
+    PS C:\nishang> Import-Module .\Gather\Get-Information.ps1
     PS C:\nishang> Get-Information
 
 To get help about any script or function, use:
@@ -22,7 +22,7 @@ Note that the help is available for the function loaded after running the script
 
 For example, to see the help about Get-WLAN-Keys.ps1, use
 
-    PS C:\nishang> . C:\nishang\Gather\Get-WLAN-Keys.ps1
+    PS C:\nishang> .C:\nishang\Gather\Get-WLAN-Keys.ps1
     PS C:\nishang> Get-Help Get-WLAN-Keys -Full
 
 # Anti Virus
@@ -126,7 +126,7 @@ Create JS files capable of executing PowerShell commands and scripts.
 Create SCT files capable of executing PowerShell commands and scripts.
 
 [Out-SCF](https://github.com/samratashok/nishang/blob/master/Client/Out-SCF.ps1)
-Create a SCF file which can be used for capturing NTLM hash challenges. 
+Create a SCF file which can be used for capturing NTLM hash challenges.
 
 ## Escalation
 [Enable-DuplicateToken](https://github.com/samratashok/nishang/blob/master/Escalation/Enable-DuplicateToken.ps1)
@@ -310,13 +310,13 @@ Encode a string to ROT13 or decode a ROT13 string.
 [Out-DnsTxt](https://github.com/samratashok/nishang/blob/master/Utility/Out-DnsTxt.ps1)
 Generate DNS TXT records which could be used with other scripts.
 
-[Base64ToString]
+[Base64ToString]()
 
-[StringToBase64]
+[StringToBase64]()
 
-[ExetoText]
+[ExetoText]()
 
-[TexttoExe]
+[TexttoExe]()
 
 # Updates
 

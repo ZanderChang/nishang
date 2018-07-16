@@ -22,32 +22,28 @@ https://github.com/samratashok/nishang
 .Notes
 The word Invoke-Prasadhak means purifier in Sanskrit language.
 #>
-    [CmdletBinding()] Param( 
+    [CmdletBinding()]
+    Param (
         [Parameter(Position = 0, Mandatory = $True)]
         [String]
         $apikey
     )
-
-    function post_http($url,$parameters) 
-    { 
-        $http_request = New-Object -ComObject Msxml2.XMLHTTP 
-        $http_request.open("POST", $url, $false) 
-        $http_request.setRequestHeader("Content-type","application/x-www-form-urlencoded") 
-        $http_request.setRequestHeader("Content-length", $parameters.length); 
-        $http_request.setRequestHeader("Connection", "close") 
-        $http_request.send($parameters) 
-        $script:response = $http_request.responseText 
-    } 
- 
-
-
+    function post_http($url,$parameters)
+    {
+        $http_request = New-Object -ComObject Msxml2.XMLHTTP
+        $http_request.open("POST", $url, $false)
+        $http_request.setRequestHeader("Content-type","application/x-www-form-urlencoded")
+        $http_request.setRequestHeader("Content-length", $parameters.length);
+        $http_request.setRequestHeader("Connection", "close")
+        $http_request.send($parameters)
+        $script:response = $http_request.responseText
+    }
     function check
     {
-        
         $res = $response | ConvertFrom-JSON
         foreach ($code in $res)
         {
-            #$proc1[$track]                
+            #$proc1[$track]
             if ($code.response_code -eq 0)
                 {
                     Write-Host "Not found in VT database. " #+ $proc1[$track]
@@ -62,7 +58,6 @@ The word Invoke-Prasadhak means purifier in Sanskrit language.
             elseif (($code.response_code -eq 1))
                 {
                     Write-Host "This is reported clean. " -ForegroundColor Green # $proc1[$track]
-                    
                 }
 
             elseif ($res.response_code -eq -2)
@@ -73,7 +68,6 @@ The word Invoke-Prasadhak means purifier in Sanskrit language.
         #$track++
         }
     }
-
 
     $ErrorActionPreference = "SilentlyContinue"
     $iteration = 0
@@ -88,7 +82,6 @@ The word Invoke-Prasadhak means purifier in Sanskrit language.
     "Total Processes detected: " + $procnumber.lines
     "Total Processes for which executables were detected: " + $procs.length
     Start-Sleep -Seconds 3
-
 
     foreach ($proc in $procs)
     {
@@ -114,6 +107,3 @@ The word Invoke-Prasadhak means purifier in Sanskrit language.
         $count++
     }
 }
-
-
-

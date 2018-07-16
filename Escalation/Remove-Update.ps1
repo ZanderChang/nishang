@@ -1,7 +1,3 @@
-
-
-
-
 function Remove-Update {
 <#
 .SYNOPSIS
@@ -40,10 +36,8 @@ https://github.com/samratashok/nishang
 
     foreach ($HotFix in $HotFixes)
     {
-
         if ($KBID -eq $HotFix.HotfixId)
         {
-        
             $KBID = $HotFix.HotfixId.Replace("KB", "") 
             $RemovalCommand = "wusa.exe /uninstall /kb:$KBID /quiet /norestart"
             Write-Host "Removing $KBID from the target."
@@ -57,14 +51,12 @@ https://github.com/samratashok/nishang
             $RemovalCommand = "wusa.exe /uninstall /kb:$KBNumber /quiet /norestart"
             Write-Host "Removing update $KBNumber from the target."
             Invoke-Expression $RemovalCommand
-        
         }
     
         if ($KBID -match "Security")
         {
             if ($HotFix.Description -match "Security")
             {
-        
                 $KBSecurity = $HotFix.HotfixId.Replace("KB", "")
                 $RemovalCommand = "wusa.exe /uninstall /kb:$KBSecurity /quiet /norestart"
                 Write-Host "Removing Security Update $KBSecurity from the target."
@@ -79,8 +71,4 @@ https://github.com/samratashok/nishang
             Write-Host "Waiting for update removal to finish ..."
         }
     }
-
 }
-
-
-
